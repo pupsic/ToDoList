@@ -10,29 +10,19 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.todolist.R;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 
-interface makeTag{
-    String run(String str);
-}
-
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements View.OnClickListener{
 
     private HomeViewModel homeViewModel;
     private ViewGroup rootView;
-    private int amount_of_elements=0;
-    private Button del_task;
-
-    public static final String PREFS_NAME = "MyPrefsFile";
-
+    private int amountOfTasks =1;
+    private static final String PREFS_NAME = "SavedValuesHomeFragment";
+    private static final String KEY_SHARED_PREFERENCES = "AmountOfTask";
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -44,24 +34,31 @@ public class HomeFragment extends Fragment {
         Button add_task = (Button) root.findViewById(R.id.add_task);
         rootView = (ViewGroup) root.findViewById(R.id.tasks);
         recover();
-        amount_of_elements=0;
-        for(int key=0;key<amount_of_elements;key++){
+        //amountOfTasks = 5;
+        System.out.println("aofTask: "+amountOfTasks);
+        for(int key = 0; key< amountOfTasks; key++){
             addTask(key);
 
         }
-
+        add_task.setOnClickListener(this);
         add_task.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 addTask();
                 rebootFragment();
-
+                System.out.println("aofTask: "+amountOfTasks);
             }
         });
 
         return root;
     }
 
+    @Override
+    public void onClick(View v) {
+        int Id = v.getId();
+        delTask(Id);
+        System.out.println("id: "+Id);
+    }
 
     private String makeKey(String type ,int id){
         String unique_id = String.valueOf(id);
@@ -77,14 +74,17 @@ public class HomeFragment extends Fragment {
         LinearLayout.LayoutParams editText_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         RelativeLayout.LayoutParams field_params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        field.setId(amount_of_elements);
-        button.setId(amount_of_elements);
-        editText.setId(amount_of_elements);
+        field.setId(amountOfTasks);
+
+        button.setId(amountOfTasks);
+        button.setOnClickListener(this);
+        editText.setId(amountOfTasks);
+
         button_params.weight = 5.0f;
         editText_params.weight = 1.0f;
         field.addView(editText, editText_params);
         field.addView(button, button_params);
-        amount_of_elements++;
+        amountOfTasks++;
         rootView.addView(field, field_params);
 
     }
@@ -100,6 +100,7 @@ public class HomeFragment extends Fragment {
         field.setId(key);
         editText.setId(key);
         button.setId(key);
+        button.setOnClickListener(this);
         button_params.weight = 5.0f;
         editText_params.weight = 1.0f;
         field.addView(editText, editText_params);
@@ -115,6 +116,7 @@ public class HomeFragment extends Fragment {
                 .attach(fragment)
                 .commit();
         store();
+
     }
 
 
@@ -122,19 +124,22 @@ public class HomeFragment extends Fragment {
     private void store(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
-        editor.putInt("amount_of_elements", amount_of_elements);
+        editor.putInt(KEY_SHARED_PREFERENCES, amountOfTasks);
         editor.commit();
     }
 
     private void recover(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
-        amount_of_elements = settings.getInt("amount_of_elements",0);
+        amountOfTasks = settings.getInt(KEY_SHARED_PREFERENCES,0);
     }
 
 
 
     public void delTask(int id_of_task){
-
+        rootView.removeViewAt(id_of_task);
+        amountOfTasks--;
+        store();
+        //rebootFragment();
     }
 
 }
