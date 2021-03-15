@@ -2,18 +2,26 @@ package com.example.todolist.ui.home;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.ArraySet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Space;
+
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.DividerItemDecoration;
 
 import com.example.todolist.R;
+
+import java.util.Set;
 
 
 public class HomeFragment extends Fragment implements View.OnClickListener{
@@ -59,8 +67,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     public void onClick(View v) {
         int Id = v.getId();
         System.out.println("id: "+Id);
-        delTask(Id);
+        if (Id == -1) {
+            String tag = v.getTag().toString();
 
+            System.out.println("Tag: "+tag);
+        }
+        else delTask(Id);
     }
 
 
@@ -72,21 +84,36 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     }
 
     private void packLayoutTask(int id){
-        Button button = new Button(getActivity()); // Need to provide the context, the Activity
+        ImageButton buttonDone = new ImageButton(getActivity());
+        ImageButton buttonDel = new ImageButton(getActivity());
         EditText editText = new EditText(getActivity());
         LinearLayout field = new LinearLayout(getActivity());
-        LinearLayout.LayoutParams button_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout.LayoutParams buttons_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         LinearLayout.LayoutParams editText_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         RelativeLayout.LayoutParams field_params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         field.setId(id);
         editText.setId(id);
-        button.setId(id);
-        button.setOnClickListener(this);
-        button_params.weight = 5.0f;
+        buttonDone.setId(id);
+        buttonDel.setId(id);
+
+        buttonDone.setTag(makeKey("button_done_",id));
+        buttonDel.setTag(makeKey("button_del_",id));
+        buttonDone.setImageResource(R.drawable.ic_baseline_done_24);
+        buttonDel.setImageResource(R.drawable.ic_baseline_delete_24);
+
+        buttonDone.setOnClickListener(this);
+        buttonDel.setOnClickListener(this);
+
+        field.setBackground(ContextCompat.getDrawable(getContext(),R.drawable.border));
+        field_params.setMargins(0,0,0,8);
+        buttons_params.weight = 5.0f;
         editText_params.weight = 1.0f;
+
         field.addView(editText, editText_params);
-        field.addView(button, button_params);
+        field.addView(buttonDone, buttons_params);
+        field.addView(buttonDel, buttons_params);
         groupTask.addView(field, field_params);
     }
 
@@ -118,11 +145,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         store();
 
     }
-
+    Set<String> val = new ArraySet<>();
     private void store(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt(KEY_SHARED_PREFERENCES, amountOfTasks);
+        editor.putStringSet("f",val);
         editor.commit();
     }
 
