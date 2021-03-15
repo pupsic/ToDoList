@@ -19,10 +19,10 @@ import com.example.todolist.R;
 public class HomeFragment extends Fragment implements View.OnClickListener{
 
     private HomeViewModel homeViewModel;
-    private ViewGroup rootView;
-    private int amountOfTasks =1;
+    private ViewGroup groupTask;
     private static final String PREFS_NAME = "SavedValuesHomeFragment";
     private static final String KEY_SHARED_PREFERENCES = "AmountOfTask";
+    private int amountOfTasks;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -32,11 +32,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
         final View root = inflater.inflate(R.layout.fragment_home, container, false);
         Button add_task = (Button) root.findViewById(R.id.add_task);
-        rootView = (ViewGroup) root.findViewById(R.id.tasks);
+        groupTask = (ViewGroup) root.findViewById(R.id.tasks);
+
         recover();
-        //amountOfTasks = 5;
+
+
         System.out.println("aofTask: "+amountOfTasks);
-        for(int key = 0; key< amountOfTasks; key++){
+        for(int key = 0; key < amountOfTasks; key++){
             addTask(key);
 
         }
@@ -45,7 +47,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View v) {
                 addTask();
-                rebootFragment();
+
                 System.out.println("aofTask: "+amountOfTasks);
             }
         });
@@ -56,8 +58,48 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         int Id = v.getId();
-        delTask(Id);
         System.out.println("id: "+Id);
+        delTask(Id);
+
+    }
+
+
+
+    public void addTask(){
+        packLayoutTask(amountOfTasks);
+        amountOfTasks++;
+        rebootFragment();
+    }
+
+    private void packLayoutTask(int id){
+        Button button = new Button(getActivity()); // Need to provide the context, the Activity
+        EditText editText = new EditText(getActivity());
+        LinearLayout field = new LinearLayout(getActivity());
+        LinearLayout.LayoutParams button_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams editText_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams field_params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        field.setId(id);
+        editText.setId(id);
+        button.setId(id);
+        button.setOnClickListener(this);
+        button_params.weight = 5.0f;
+        editText_params.weight = 1.0f;
+        field.addView(editText, editText_params);
+        field.addView(button, button_params);
+        groupTask.addView(field, field_params);
+    }
+
+    public void addTask(int key){
+        packLayoutTask(key);
+    }
+
+    public void delTask(int id_of_task){
+        View field = groupTask.getChildAt(id_of_task);
+        groupTask.removeView(field);
+        amountOfTasks--;
+        store();
+        rebootFragment();
     }
 
     private String makeKey(String type ,int id){
@@ -66,48 +108,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     }
 
 
-    public void addTask(){
-        Button button = new Button(getActivity()); // Need to provide the context, the Activity
-        EditText editText = new EditText(getActivity());
-        LinearLayout field = new LinearLayout(getActivity());
-        LinearLayout.LayoutParams button_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        LinearLayout.LayoutParams editText_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        RelativeLayout.LayoutParams field_params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        field.setId(amountOfTasks);
-
-        button.setId(amountOfTasks);
-        button.setOnClickListener(this);
-        editText.setId(amountOfTasks);
-
-        button_params.weight = 5.0f;
-        editText_params.weight = 1.0f;
-        field.addView(editText, editText_params);
-        field.addView(button, button_params);
-        amountOfTasks++;
-        rootView.addView(field, field_params);
-
-    }
-
-    public void addTask(int key){
-        Button button = new Button(getActivity()); // Need to provide the context, the Activity
-        EditText editText = new EditText(getActivity());
-        LinearLayout field = new LinearLayout(getActivity());
-        LinearLayout.LayoutParams button_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        LinearLayout.LayoutParams editText_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        RelativeLayout.LayoutParams field_params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        field.setId(key);
-        editText.setId(key);
-        button.setId(key);
-        button.setOnClickListener(this);
-        button_params.weight = 5.0f;
-        editText_params.weight = 1.0f;
-        field.addView(editText, editText_params);
-        field.addView(button, button_params);
-        rootView.addView(field, field_params);
-
-    }
     private void rebootFragment(){
         HomeFragment fragment = (HomeFragment)
                 getFragmentManager().findFragmentById(((ViewGroup)getView().getParent()).getId());
@@ -118,8 +118,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         store();
 
     }
-
-
 
     private void store(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
@@ -133,13 +131,5 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         amountOfTasks = settings.getInt(KEY_SHARED_PREFERENCES,0);
     }
 
-
-
-    public void delTask(int id_of_task){
-        rootView.removeViewAt(id_of_task);
-        amountOfTasks--;
-        store();
-        //rebootFragment();
-    }
 
 }
