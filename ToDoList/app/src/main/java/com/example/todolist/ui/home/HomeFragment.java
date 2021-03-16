@@ -7,6 +7,8 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -14,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -28,7 +31,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     private HomeViewModel homeViewModel;
     private ViewGroup groupTask;
     private static final String PREFS_NAME = "SavedValuesHomeFragment";
-    private static final String KEY_SHARED_PREFERENCES = "AmountOfTask";
+    private static final String KEY_SHARED_PREFERENCES_INT = "AmountOfTask";
     private static final String KEY_SHARED_PREFERENCES_STRING = "TextForTask_";
     private int amountOfTasks;
     private ArrayList<String> textsOfTasks;
@@ -47,9 +50,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         recover();
 
         for(int key = 0; key < amountOfTasks; key++){
-
             addTask(key);
-
         }
         //add_task.setOnClickListener(this);
         add_task.setOnClickListener(new View.OnClickListener() {
@@ -67,13 +68,18 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         int Id = v.getId();
+        LinearLayout linearLayout = (LinearLayout) getActivity().findViewById(Id);
+        //linearLayout.setBackgroundColor(757575);
         System.out.println("id: "+Id);
-        if (Id == -1) {
-            String tag = v.getTag().toString();
-
-            System.out.println("Tag: "+tag);
+        String tag = v.getTag().toString();
+        if(tag.contains("button_done_")) {
+            animateComplete(linearLayout, Id);
         }
-        else delTask(Id);
+        else if (tag.contains("button_del_")){
+            animateDelete(linearLayout,Id);
+        }
+
+        //delTask(Id);
     }
 
 
@@ -96,6 +102,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         ImageButton buttonDone = new ImageButton(getActivity());
         ImageButton buttonDel = new ImageButton(getActivity());
         LinearLayout field = new LinearLayout(getActivity());
+
         final EditText editText = new EditText(getActivity());
 
         LinearLayout.LayoutParams buttons_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -106,9 +113,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         editText.setId(id);
         buttonDone.setId(id);
         buttonDel.setId(id);
+
+
         editText.setText(textsOfTasks.get(id));
         buttonDone.setTag(addStringAndId("button_done_",id));
         buttonDel.setTag(addStringAndId("button_del_",id));
+
         buttonDone.setImageResource(R.drawable.ic_baseline_done_24);
         buttonDel.setImageResource(R.drawable.ic_baseline_delete_24);
 
@@ -124,7 +134,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             public void afterTextChanged(Editable s) {  saveIntoArray(editText.getText().toString(),id);       }
         });
 
-        field.setBackground(ContextCompat.getDrawable(getContext(),R.drawable.border));
+
         field_params.setMargins(0,0,0,8);
         buttons_params.weight = 5.0f;
         editText_params.weight = 1.0f;
@@ -132,16 +142,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         field.addView(editText, editText_params);
         field.addView(buttonDone, buttons_params);
         field.addView(buttonDel, buttons_params);
+
         groupTask.addView(field, field_params);
     }
 
 
 
-    public void delTask(int id_of_task){
-        View field = groupTask.getChildAt(id_of_task);
-        groupTask.removeView(field);
+    public void delTask(int idOfTask){
+        LinearLayout linearLayout = (LinearLayout) getActivity().findViewById(idOfTask);
+        linearLayout.removeAllViews();
+        //↑ this two strings equals to the next two strings
+        //View field = groupTask.getChildAt(idOfTask);
+        //groupTask.removeView(field);
         amountOfTasks--;
-        textsOfTasks.remove(id_of_task);
+        textsOfTasks.remove(idOfTask);
         store();
         rebootFragment();
     }
@@ -166,7 +180,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     private void store(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
-        editor.putInt(KEY_SHARED_PREFERENCES, amountOfTasks);
+        editor.putInt(KEY_SHARED_PREFERENCES_INT, amountOfTasks);
         for(int index = 0; index < textsOfTasks.size(); index++){
             editor.putString(addStringAndId(KEY_SHARED_PREFERENCES_STRING,index), textsOfTasks.get(index));
         }
@@ -175,11 +189,61 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
     private void recover(){
         SharedPreferences settings = this.getActivity().getSharedPreferences(PREFS_NAME, 0);
-        amountOfTasks = settings.getInt(KEY_SHARED_PREFERENCES,0);
+        amountOfTasks = settings.getInt(KEY_SHARED_PREFERENCES_INT,0);
         settings.getString(KEY_SHARED_PREFERENCES_STRING,"");
         for(int index=0; index<amountOfTasks;index++){
-            textsOfTasks.add(index,settings.getString(addStringAndId(KEY_SHARED_PREFERENCES_STRING,index),"")); ;
+            textsOfTasks.add(index,settings.getString(addStringAndId(KEY_SHARED_PREFERENCES_STRING,index),""));
         }
     }
 
+    private void animateComplete(final View view,final int Id){
+        Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.animation_complate);
+        //animation.setDuration(1000);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                groupTask.setBackgroundColor(getResources().getColor(R.color.colorComplete));
+                for(int index=0; index<amountOfTasks;index++){
+                    final LinearLayout backgroundLayout = (LinearLayout)  getActivity().findViewById(index);
+                    backgroundLayout.setBackgroundColor(getResources().getColor(R.color.colorTaskLayout));
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.GONE);//for smooth animation
+                delTask(Id);
+            }
+        });
+        view.startAnimation(animation);
+    }
+    private void animateDelete(final View view,final int Id){
+        Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.animation_delete);
+        //animation.setDuration(1000);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                groupTask.setBackgroundColor(getResources().getColor(R.color.colorDelete));
+                for(int index=0; index<amountOfTasks;index++){
+                    final LinearLayout backgroundLayout = (LinearLayout)  getActivity().findViewById(index);
+                    backgroundLayout.setBackgroundColor(getResources().getColor(R.color.colorTaskLayout));
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.GONE);//for smooth animation
+                delTask(Id);
+            }
+        });
+        view.startAnimation(animation);
+    }
 }

@@ -3,4 +3,7 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+    <color name="colorComplete">#21B827</color>
+    <color name="colorDelete">#B82121</color>
+    <color name="colorTaskLayout">#FFFFFF</color>
 </resources>
